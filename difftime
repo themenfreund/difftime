@@ -1,0 +1,53 @@
+		echo 'Öffnungszeiten: ';
+		echo '<table border="2">';
+			echo '<tr><th width="100"></th><th width="200">Vormittags</th><th width="200">Nachmittags</th></tr>';
+	
+		// sind Öffnungszeiten vorhanden?
+			
+			if ( have_rows( 'oeffnungszeiten' ) ) :
+				while ( have_rows( 'oeffnungszeiten' ) ) : the_row();
+					$von1[] = get_sub_field("vorvon");
+					$bis1[] = get_sub_field("vorbis");
+					$von2[] = get_sub_field("navon");
+					$bis2[] = get_sub_field("nabis");
+					
+				endwhile;			
+				
+				for ($i = 0, $n = count($von1); $i < $n; $i++) {
+				
+				// Zeit -30 Minuten vor Schließung errechnen / vorges = Uhrzeit vormittags geschlossen / nages = Uhrzeit nachmittags geschlossen
+				
+				if (!empty($bis1[$i])) {
+				
+					$vorges[$i] = $bis1[$i];
+					$warnung1[$i] = date("H:i", strtotime($vorges[$i]) - (30*60));
+				}
+					
+				if (!empty($bis2[$i])) { 
+					$nages[$i] = $bis2[$i];
+					$warnung2[$i] = date("H:i", strtotime($nages[$i]) - (30*60));
+				}
+				
+					$datum1 = $warnung1[$i];
+					$datum2 = $warnung2[$i];
+					$datum3 = wp_date('H:i', current_time( 'timestamp', 1 ) ); 
+					$difftime1 = date_diff($datum3, $datum1);
+					$difftime2 = date_diff($datum3, $datum2);
+					
+
+				echo '<br /> ' . $wochentage[$i] . ' warnung 1: ' . $datum1 . ' warnung 2: ' . $datum2 . ' aktuelle Zeit: ' . $datum3 ;
+				// Prüfen ob zur Zeit geöffnet ist. Wenn ja, Ausgabe von 'Zur Zeit geöffnet'. Ansonsten die else-Schleifen durchlaufen.
+	 
+					if (($stunde_jetzt >= $von1[$i] && $stunde_jetzt <= $bis1[$i] OR $stunde_jetzt >= $von1[$i] && $stunde_jetzt <= $bis2[$i] OR $stunde_jetzt >= $von2[$i] & $stunde_jetzt <= $bis2[$i]) && ($i == $momentanerWochentag - 1)) {
+						echo '<tr bgcolor="#ddd"><td align="left">' . $wochentage[$i] . '</td><td align="center" colspan="2">Zur Zeit geöffnet</td></tr>';
+					}
+					
+					// Ab 30  Minuten vor der Schließungszeit ausgeben, das gleich geschlossen wird.
+					
+					if (($stunde_jetzt >= $warnung1[$i] && $stunde_jetzt <= $vorges[$i]) && ($i == $momentanerWochentag - 1)) {
+						echo '<tr bgcolor="#ddd"><td align="left">  </td><td align="center" colspan="2">Schließt in '. $difftime1 . ' Minuten</td></tr>';
+					}
+					
+					if (($stunde_jetzt >= $warnung2[$i] && $stunde_jetzt <= $nages[$i]) && ($i == $momentanerWochentag - 1)) {
+						echo '<tr bgcolor="#ddd"><td align="left">  </td><td align="center" colspan="2">Schließt in '. $difftime2 . ' Minuten</td></tr>';
+					}
